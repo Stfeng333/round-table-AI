@@ -1,5 +1,8 @@
 from flask import Flask, send_from_directory
+from dotenv import load_dotenv
 
+
+load_dotenv()
 
 app = Flask(
     __name__,
@@ -13,7 +16,6 @@ def index():
 @app.route("/<path:path>")
 def static_files(path):
     return send_from_directory(app.static_folder, path)
-
 
 
 if __name__ == "__main__":
