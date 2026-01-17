@@ -10,6 +10,7 @@ python -m venv .venv
 pip install -r requirements.txt
 python app.py
 cd frontend
+npm install
 npm run build
 ```
 
@@ -21,6 +22,7 @@ source ./venv/bin/activate
 pip install -r requirements.txt
 python3 app.py
 cd frontend
+npm install
 npm run build
 ```
 ## Docker Stuff
