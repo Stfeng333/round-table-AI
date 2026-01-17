@@ -6,7 +6,7 @@ const Welcome = () => {
   const navigate = useNavigate()
 
   const handleStartGame = () => {
-    navigate('/game')
+    navigate('/CardSelection')
   }
 
   return (
