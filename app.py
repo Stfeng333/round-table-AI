@@ -2,6 +2,10 @@ from flask import Flask, send_from_directory, request
 from dotenv import load_dotenv
 import pymongo
 
+from card import Card
+
+
+cards = []
 
 mongo_client = pymongo.MongoClient("mongo", 27017)
 
@@ -18,9 +22,17 @@ def index():
 
 @app.route("/api/deck", methods=["POST"])
 def get_deck():
-    print(request.get_json())
+    try:
+        agents = request.get_json()["agents"]
+        for agent in agents:
+            cards.append(Card(agent["model"],
+                              agent["expertise"],
+                              agent["personality"],
+                              agent["role"]))
+    except KeyError:
+        return "", 400
 
-    return "hello world"
+    return "", 200
 
 @app.route("/<path:path>")
 def static_files(path):
