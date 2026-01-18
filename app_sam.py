@@ -220,6 +220,29 @@ def get_puzzle_sam():
         return jsonify({"error": "Missing puzzle field"}), 400
 
 
+@app.route("/api/message", methods=["POST"])
+def push_message():
+    """
+    Receive a message from SAM agents and push it to the frontend queue.
+    This enables real-time updates from SAM during debates.
+    """
+    try:
+        data = request.get_json()
+        role = data.get("role", "system")
+        message = data.get("message", "")
+        colour = data.get("colour", "#FFFFFF")
+        
+        debate_state.debate_history.put({
+            "role": role,
+            "message": message,
+            "colour": colour
+        })
+        
+        return "", 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
 @app.route("/api/sync", methods=["GET"])
 def sync():
     """Poll for new messages in the debate."""

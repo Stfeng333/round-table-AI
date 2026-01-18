@@ -48,6 +48,20 @@ apps:
         
         When receiving a request, extract the puzzle and cards configuration, then call run_debate.
         Present the debate results in a clear, formatted way showing each participant's contributions.
+        
+        **REAL-TIME UPDATES**: Use send_frontend_message to send updates to the user's screen in real-time.
+        Call this tool whenever:
+        - A debate round starts
+        - A participant speaks
+        - Important decisions are made
+        - The debate concludes
+        
+        Use these colors for different roles:
+        - Facilitator: "#DC143C" (red)
+        - Critic: "#00FF00" (green)
+        - Reasoner: "#0088FF" (blue)
+        - StateTracker: "#FFFF00" (yellow)
+        - System updates: "#FFFFFF" (white)
       
       tools:
         - tool_type: python
@@ -57,6 +71,10 @@ apps:
         - tool_type: python
           component_module: "src.debate_tools"
           function_name: "call_llm"
+          tool_config: {}
+        - tool_type: python
+          component_module: "src.debate_tools"
+          function_name: "send_frontend_message"
           tool_config: {}
 
       session_service: 
@@ -77,6 +95,7 @@ apps:
           Supports OpenAI (ChatGPT) and Gemini models as debate participants.
           Each participant has a role (facilitator, critic, reasoner, stateTracker), 
           personality, and expertise that shapes their contributions.
+          Can send real-time updates to the frontend during debates.
         defaultInputModes: [text] 
         defaultOutputModes: [text, file] 
         skills:
@@ -86,6 +105,9 @@ apps:
           - id: "call_llm"
             name: "Call Individual LLM"
             description: "Make a single call to an OpenAI or Gemini model with debate participant configuration"
+          - id: "send_frontend_message"
+            name: "Send Frontend Message"
+            description: "Send a real-time message to the frontend UI for live updates during debates"
       
       # Discovery & Communication
       agent_card_publishing: 

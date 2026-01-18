@@ -6,9 +6,38 @@ to enable multi-model debate orchestration.
 
 import os
 import json
+import requests
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel, Field
 from google.adk.tools import ToolContext
+
+
+# Flask API URL for pushing messages to frontend
+FLASK_API_URL = os.environ.get("FLASK_API_URL", "http://127.0.0.1:5000")
+
+# Color mapping for debate roles
+ROLE_COLOURS = {
+    "facilitator": "#DC143C",  # Red
+    "critic": "#00FF00",       # Green
+    "reasoner": "#0088FF",     # Blue
+    "stateTracker": "#FFFF00", # Yellow
+    "system": "#FFFFFF",       # White
+    "error": "#FF6600"         # Orange
+}
+
+
+def _push_to_frontend(role: str, message: str, model: str = ""):
+    """Push a message to the frontend via Flask API (fire-and-forget)."""
+    try:
+        colour = ROLE_COLOURS.get(role, "#FFFFFF")
+        display_msg = f"[{model}] {message}" if model else message
+        requests.post(
+            f"{FLASK_API_URL}/api/message",
+            json={"role": role, "message": display_msg, "colour": colour},
+            timeout=2
+        )
+    except:
+        pass  # Don't let frontend issues break the debate
 
 
 # Role instructions for debate participants
@@ -55,7 +84,7 @@ def _call_openai(messages: List[Dict[str, str]], model: str = "gpt-4o") -> str:
         return f"OpenAI Error: {str(e)}"
 
 
-def _call_gemini(messages: List[Dict[str, str]], model: str = "gemini-2.0-flash") -> str:
+def _call_gemini(messages: List[Dict[str, str]], model: str = "gemini-2.5-flash") -> str:
     """Call Gemini API with the given messages."""
     from google import genai
     
@@ -140,7 +169,7 @@ def call_llm(
         model = model_name or "gpt-4o"
         response = _call_openai(messages, model)
     elif provider == "gemini":
-        model = model_name or "gemini-2.0-flash"
+        model = model_name or "gemini-2.5-flash"
         response = _call_gemini(messages, model)
     else:
         return {
@@ -225,12 +254,17 @@ def run_debate(
             "final_answer": None
         }
     
+    # Push start message to frontend
+    _push_to_frontend("system", f"🎯 Starting debate on: {puzzle}")
+    
     # Run debate
     debate_history = []
     conversation_text = ""
     final_answer = None
     
     for round_num in range(max_rounds):
+        _push_to_frontend("system", f"📢 Round {round_num + 1} of {max_rounds}")
+        
         # Shuffle participants each round
         random.shuffle(participants)
         
@@ -256,11 +290,15 @@ def run_debate(
             if result["status"] == "success":
                 response = result["response"]
                 role = card.get("role", "unknown")
+                model_name = card.get("model", "unknown")
+                
+                # Push to frontend in real-time
+                _push_to_frontend(role, response, model_name)
                 
                 # Add to history
                 debate_history.append({
                     "role": role,
-                    "model": card.get("model", "unknown"),
+                    "model": model_name,
                     "personality": card.get("personality", ""),
                     "expertise": card.get("expertise", ""),
                     "message": response
@@ -269,10 +307,12 @@ def run_debate(
                 # Update conversation text for context sharing
                 conversation_text += f"\n[{role.upper()}]: {response}\n"
             else:
+                error_msg = result.get("message", "Unknown error")
+                _push_to_frontend("error", f"[{card.get('model', 'unknown')}] Error: {error_msg}")
                 debate_history.append({
                     "role": card.get("role", "unknown"),
                     "model": card.get("model", "unknown"),
-                    "error": result.get("message", "Unknown error")
+                    "error": error_msg
                 })
             
             # Small delay to avoid rate limiting
@@ -297,10 +337,14 @@ def run_debate(
         
         if fac_result["status"] == "success":
             fac_response = fac_result["response"]
+            fac_model = facilitator.get("model", "unknown")
+            
+            # Push facilitator message to frontend
+            _push_to_frontend("facilitator", fac_response, fac_model)
             
             debate_history.append({
                 "role": "facilitator",
-                "model": facilitator.get("model", "unknown"),
+                "model": fac_model,
                 "personality": facilitator.get("personality", ""),
                 "expertise": facilitator.get("expertise", ""),
                 "message": fac_response
@@ -311,15 +355,21 @@ def run_debate(
             # Check if facilitator has reached a conclusion
             if "that is the answer" in fac_response.lower():
                 final_answer = fac_response
+                _push_to_frontend("system", "✅ Debate concluded! Final answer reached.")
                 break
         else:
+            error_msg = fac_result.get("message", "Unknown error")
+            _push_to_frontend("error", f"[{facilitator.get('model', 'unknown')}] Error: {error_msg}")
             debate_history.append({
                 "role": "facilitator",
                 "model": facilitator.get("model", "unknown"),
-                "error": fac_result.get("message", "Unknown error")
+                "error": error_msg
             })
         
         time.sleep(0.3)
+    
+    if not final_answer:
+        _push_to_frontend("system", f"⏱️ Debate ended after {max_rounds} rounds without conclusion.")
     
     return {
         "status": "completed",
@@ -439,3 +489,64 @@ def run_debate_streaming(
         "status": "completed",
         "final_answer": final_answer
     }
+
+
+# =============================================================================
+# FRONTEND MESSAGING TOOL
+# =============================================================================
+
+FLASK_API_URL = os.environ.get("FLASK_API_URL", "http://127.0.0.1:5000")
+
+async def send_frontend_message(
+    role: str,
+    message: str,
+    colour: str = "#FFFFFF",
+    tool_context: Optional[ToolContext] = None,
+    tool_config: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
+    """
+    Send a message to the frontend via the Flask API.
+    This allows the SAM agent to push real-time updates to the React frontend.
+    
+    Args:
+        role: The role/speaker name (e.g., "facilitator", "critic", "system")
+        message: The message content to display
+        colour: Hex color code for the message (default: white)
+    
+    Returns:
+        A dictionary with the status of the message send operation.
+    """
+    import requests
+    
+    try:
+        response = requests.post(
+            f"{FLASK_API_URL}/api/message",
+            json={
+                "role": role,
+                "message": message,
+                "colour": colour
+            },
+            timeout=5
+        )
+        
+        if response.status_code == 200:
+            return {
+                "status": "success",
+                "message": f"Message sent to frontend: [{role}] {message[:50]}..."
+            }
+        else:
+            return {
+                "status": "error",
+                "message": f"Failed to send message: HTTP {response.status_code}"
+            }
+    except requests.exceptions.ConnectionError:
+        return {
+            "status": "error", 
+            "message": "Could not connect to Flask API. Is it running?"
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Error sending message: {str(e)}"
+        }
+
