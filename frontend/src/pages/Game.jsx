@@ -30,7 +30,7 @@ const Game = () => {
       } catch (error) {
         console.error("Sync error:", error);
       }
-    }, 1000);
+    }, 300);
 
     return () => clearInterval(interval);
   }, []);

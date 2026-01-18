@@ -1,14 +1,12 @@
-import random
-
 from flask import Flask, send_from_directory, request, jsonify
 from dotenv import load_dotenv
 import pymongo
 
+from reasoning import GameState
 from card import Card
 
 
-cards = []
-puzzle = None
+game_state = GameState()
 
 mongo_client = pymongo.MongoClient("mongo", 27017)
 
@@ -28,7 +26,7 @@ def get_deck():
     try:
         agents = request.get_json()["agents"]
         for agent in agents:
-            cards.append(Card(agent["model"],
+            game_state.cards.append(Card(agent["model"],
                               agent["expertise"],
                               agent["personality"],
                               agent["role"]))
@@ -39,26 +37,37 @@ def get_deck():
 
 @app.route("/api/puzzle", methods=["POST"])
 def get_puzzle():
-    global puzzle
-
     try:
-        puzzle = request.get_json()["puzzle"]
+        game_state.puzzle = request.get_json()["puzzle"]
+        game_state.start_debate()
     except KeyError:
         return "", 400
 
     return "", 200
 
+# this endpoint will get polled by frontend to pull new messages in the debate
 @app.route("/api/sync", methods=["GET"])
 def sync():
-    colors = ["#ff0000", "#00ff00", "#0000ff", "#ffff00", "#ff00ff", "#00ffff"]
+    # if msg is empty frontend will ignore it
+    msg = ""
+    colour = ""
+
+    if game_state.debate_history:
+        card, msg = game_state.debate_history.pop(0)
+        colour = {"facilitator": "#ff0000",
+                  "critic": "#00ff00",
+                  "reasoner": "#0000ff",
+                  "stateTracker": "#ffff00"}[card.role]
+
     return jsonify({
-        "text": str(random.randint(0, 100000)),
-        "colour": random.choice(colors)
+        "text": msg,
+        "colour": colour,
     })
 
 @app.route("/<path:path>")
 def static_files(path):
     return send_from_directory(app.static_folder, path)
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
