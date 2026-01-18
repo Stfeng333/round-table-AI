@@ -1,9 +1,11 @@
-FROM node:lts AS frontend
+FROM node:lts AS frontend-build
 
 WORKDIR /frontend
+
 COPY frontend/package*.json ./
 RUN npm install
-COPY frontend .
+
+COPY frontend ./
 RUN npm run build
 
 FROM python:3.12-slim
@@ -15,7 +17,6 @@ RUN apt-get update \
 WORKDIR /app
 
 COPY requirements.txt .
-
 RUN python3 -m venv /opt/venv \
     && /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
 
@@ -23,6 +24,6 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 COPY . .
 
-COPY --from=frontend /frontend/build ./frontend/build
+COPY --from=frontend-build /frontend/dist ./frontend/dist
 
 CMD ["gunicorn", "app:app"]
