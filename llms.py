@@ -1,4 +1,5 @@
 import os
+import re
 from abc import ABC, abstractmethod
 
 from groq import Groq
@@ -33,6 +34,10 @@ class Llm(ABC):
         pass
 
     @abstractmethod
+    def add_context(self, msg):
+        pass
+
+    @abstractmethod
     def init(self):
         ...
 
@@ -48,6 +53,9 @@ class Gpt41(Llm):
         self._messages = []
 
         self.init()
+
+    def add_context(self, msg):
+        self._messages.append(msg)
 
     def clear_context(self):
         self._messages.clear()
@@ -82,6 +90,9 @@ class GroqModel(Llm, ABC):
     def init(self):
         self.client = Groq(api_key=os.environ["GROQ_API_KEY"])
 
+    def add_context(self, msg):
+        self._messages.append(msg)
+
     def clear_context(self):
         self._messages.clear()
 
@@ -97,7 +108,9 @@ class GroqModel(Llm, ABC):
             messages=self._construct_context(),
             model=self.groq_model,
         )
-        return chat_completion.choices[0].message.content
+
+        # remove the thinking shit
+        return re.sub(r"<think>[\s\S]*?</think>", "", chat_completion.choices[0].message.content)
 
 class KimiK2(GroqModel):
     def __init__(self, instructions=""):
@@ -129,10 +142,15 @@ class Gemini3Flash(Llm):
 
         self.chat = None
 
+        self._added_context = []
+
         self.init()
 
     def clear_context(self):
         self.chat = self.client.chats.create(model="gemini-3-flash-preview")
+
+    def add_context(self, msg):
+        self._added_context.append(msg)
 
     def init(self):
         self.client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
@@ -142,7 +160,8 @@ class Gemini3Flash(Llm):
         self.clear_context()
 
     def get_response(self, prompt):
-        response = self.chat.send_message(prompt)
+        response = self.chat.send_message("\n".join(self._added_context) + "\n" + prompt)
+        self._added_context.clear()
 
         return response.text
 
