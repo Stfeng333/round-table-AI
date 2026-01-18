@@ -1,3 +1,4 @@
+solace-agent-mesh~=1.13.6
 annotated-types==0.7.0
 anyio==4.12.1
 beautifulsoup4==4.14.3
