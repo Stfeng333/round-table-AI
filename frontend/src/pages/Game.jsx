@@ -1,27 +1,120 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import Button from "../components/common/Button";
+
+const PUZZLES = {
+  "Murder Mystery":
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+};
 
 const Game = () => {
+  const navigate = useNavigate();
   const [selectedOption, setSelectedOption] = useState("");
+  const [puzzleText, setPuzzleText] = useState("");
+  const [history, setHistory] = useState([]);
+  const historyEndRef = useRef(null);
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch("/api/sync");
+        const data = await response.json();
+        if (data.text) {
+          setHistory((prev) => {
+            if (prev[prev.length - 1] !== data.text) {
+              return [...prev, data.text];
+            }
+            return prev;
+          });
+        }
+      } catch (error) {
+        console.error("Sync error:", error);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    historyEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [history]);
+
+  const handleSelectChange = (e) => {
+    const selected = e.target.value;
+    setSelectedOption(selected);
+    setPuzzleText(PUZZLES[selected] || "");
+  };
+
+  const handleSubmit = async () => {
+    if (!selectedOption) return;
+
+    try {
+      const response = await fetch("/api/puzzle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ puzzle: selectedOption }),
+      });
+
+      if (!response.ok) throw new Error("Failed to submit puzzle");
+      setSelectedOption("");
+      setPuzzleText("");
+    } catch (error) {
+      console.error("Submit error:", error);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white p-8 flex flex-col items-center justify-center">
-      <h1 className="text-4xl font-black tracking-tight mb-8">Game</h1>
+    <div className="h-screen bg-neutral-950 text-white p-8 flex flex-col overflow-hidden">
+      <div className="flex gap-8 flex-1 min-h-0">
+        {/* Left Panel */}
+        <div className="flex-1 flex flex-col gap-4 min-h-0">
+          <div className="flex gap-2">
+            <select
+              value={selectedOption}
+              onChange={handleSelectChange}
+              className="flex-1 bg-neutral-800 border border-neutral-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+            >
+              <option value="">Choose a puzzle...</option>
+              {Object.keys(PUZZLES).map((puzzle) => (
+                <option key={puzzle} value={puzzle}>
+                  {puzzle}
+                </option>
+              ))}
+            </select>
+            <Button onClick={handleSubmit} disabled={!selectedOption}>
+              Submit
+            </Button>
+          </div>
 
-      <div className="w-64">
-        <label className="block text-neutral-400 text-sm font-medium mb-2">
-          Select an option
-        </label>
-        <select
-          value={selectedOption}
-          onChange={(e) => setSelectedOption(e.target.value)}
-          className="w-full bg-neutral-800 border border-neutral-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-        >
-          <option value="">Choose...</option>
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-        </select>
+          <div className="flex-1 bg-neutral-900 border border-neutral-700 rounded-lg p-6 overflow-y-auto min-h-0">
+            <p className="text-neutral-200 leading-relaxed whitespace-pre-wrap">
+              {puzzleText || (
+                <span className="text-neutral-500">
+                  Select a puzzle to view details...
+                </span>
+              )}
+            </p>
+          </div>
+        </div>
+
+        {/* Right Panel - History */}
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 overflow-y-auto bg-neutral-900 border border-neutral-700 rounded-lg p-4 space-y-2 min-h-0">
+            {history.length === 0 ? (
+              <p className="text-neutral-500 text-sm">Waiting for activity...</p>
+            ) : (
+              history.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="text-sm text-neutral-300 bg-neutral-800 p-2 rounded border-l-2 border-amber-500"
+                >
+                  {item}
+                </div>
+              )))
+            }
+            <div ref={historyEndRef} />
+          </div>
+        </div>
       </div>
     </div>
   );
