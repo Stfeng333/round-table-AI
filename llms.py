@@ -2,14 +2,26 @@ import os
 from abc import ABC, abstractmethod
 
 from groq import Groq
-
-import google.generativeai as genai
+from google import genai
 import requests
-import json
 from openai import OpenAI
 
 
 class Llm(ABC):
+    '''
+    Each model has their own object. For example, Gpt41 for gpt-4.1
+
+    ModelObject(instructions: str = "")
+
+    parameters:
+        instructions: context given to model in the beginning
+
+    methods:
+        init() -> None: call before use
+        clear_context() -> None: wipe chat history
+        get_response() -> str: send a message and receive a response, added to chat history (context)
+    '''
+
     def __init__(self, instructions):
         self.client = None
 
@@ -17,6 +29,10 @@ class Llm(ABC):
         self.instructions = instructions
 
     @abstractmethod
+    def clear_context(self):
+        pass
+
+    @abstractmethod
     def init(self):
         ...
 
@@ -24,27 +40,41 @@ class Llm(ABC):
     def get_response(self, prompt):
         ...
 
-class Gpt4(Llm):
+class Gpt41(Llm):
     def __init__(self, instructions=""):
         super().__init__(instructions)
 
+        self._instructions = instructions
+        self._messages = []
+
         self.init()
+
+    def clear_context(self):
+        self._messages.clear()
+
+    def _construct_context(self):
+        context = [{"role":"developer", "content":self._instructions}] if self._instructions else []
+        context += [{"role":"user", "content":m} for m in self._messages]
+        return context
 
     def init(self):
         self.client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
     def get_response(self, prompt):
-        response = self.client.responses.create(
-            model="gpt-4o",
-            instructions=self.instructions,
-            input=prompt
+        self._messages.append(prompt)
+
+        response = self.client.chat.completions.create(
+            model="gpt-4.1",
+            messages=self._construct_context(),
         )
-        return response.output[0].content[0].text
+        return response.choices[0].message.content
 
 class GroqModel(Llm, ABC):
     def __init__(self, model, instructions):
         super().__init__(instructions)
 
+        self._messages = []
+        self._instructions = instructions
         self.groq_model = model
 
         self.init()
@@ -52,18 +82,19 @@ class GroqModel(Llm, ABC):
     def init(self):
         self.client = Groq(api_key=os.environ["GROQ_API_KEY"])
 
+    def clear_context(self):
+        self._messages.clear()
+
+    def _construct_context(self):
+        context = [{"role":"system", "content":self._instructions}] if self._instructions else []
+        context += [{"role":"user", "content":m} for m in self._messages]
+        return context
+
     def get_response(self, prompt):
+        self._messages.append(prompt)
+
         chat_completion = self.client.chat.completions.create(
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt,
-                },
-                {
-                    "role": "system",
-                    "content": self.instructions,
-                },
-            ],
+            messages=self._construct_context(),
             model=self.groq_model,
         )
         return chat_completion.choices[0].message.content
@@ -92,34 +123,48 @@ class Llama33(GroqModel):
 
         self.init()
 
-class Gemini(Llm):
+class Gemini3Flash(Llm):
     def __init__(self, instructions=""):
         super().__init__(instructions)
+
+        self.chat = None
+
         self.init()
 
-    def init(self):
-        genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
-        self.model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
-            system_instructions=self.instructions or None
-        )
-    def get_response(self, prompt):
-        reponse = self.model.generate_content(prompt)
-        return reponse.text
+    def clear_context(self):
+        self.chat = self.client.chats.create(model="gemini-3-flash-preview")
 
+    def init(self):
+        self.client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+
+        # creates a new chat object, prevents duplication of code even
+        # if it's semantically weird
+        self.clear_context()
+
+    def get_response(self, prompt):
+        response = self.chat.send_message(prompt)
+
+        return response.text
+
+
+# does not work properly
 class DeepSeek(Llm):
     def __init__(self, instructions=""):
         super().__init__(instructions)
+
         self.init()
 
+    # must be implemented
     def init(self):
-        self.api_key = os.environ["DEEPSEEK_API_KEY"]
-        self.url = "https://api.deepseek.com/chat/completions"
-    
+        pass
+
     def get_response(self, prompt):
+        URL = "https://api.deepseek.com/chat/completions"
+        API_KEY = os.environ["DEEPSEEK_API_KEY"]
+
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer{self.api_key}"
+            "Authorization": f"Bearer{API_KEY}"
         }
 
         messages = []
@@ -130,10 +175,10 @@ class DeepSeek(Llm):
         data = {
             "model": "deepseek-chat",
             "messages": messages,
-            "steam":False
+            "steam": False
         }
 
-        response = requests.post(self.url, headers=headers, json=data)
+        response = requests.post(URL, headers=headers, json=data)
         response.raise_for_status()
         data = response.json()
         return data["choices"][0]["message"]["content"]
@@ -143,5 +188,6 @@ class DeepSeek(Llm):
 if __name__ == "__main__":
     from dotenv import load_dotenv
     load_dotenv()
-    client = KimiK2()
-    print(client.get_response("hello what model are you"))
+    client = GptOss(instructions="It's opposite day")
+    print(client.get_response("i love red"))
+    print(client.get_response("what colour do I love"))
