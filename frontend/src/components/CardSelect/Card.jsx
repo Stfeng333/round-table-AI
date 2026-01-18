@@ -48,17 +48,17 @@ const Card = ({ id, model, expertise, personality, selected }) => {
       `}
       style={{ WebkitUserDrag: "element" }}
     >
-      <div className="absolute inset-0 bg-neutral-200 flex items-center justify-center pb-16">
+      <div className="absolute inset-0 bg-gradient-to-b from-neutral-300 to-neutral-400 flex items-center justify-center pb-16">
         <img
           src={MODEL_LOGOS[model]}
           alt={model}
-          className="w-24 h-24 object-contain"
+          className="w-24 h-24 object-contain drop-shadow-md"
           draggable={false}
         />
       </div>
       <div className="absolute bottom-0 left-0 right-0 p-2 bg-neutral-900 space-y-1">
         <h3 className="text-white font-bold text-sm truncate">{model}</h3>
-        <div className="flex flex-col gap-0.5 text-[10px]">
+        <div className="flex flex-col gap-0.5 text-xs">
           <span className="text-blue-400 truncate">🎯 {expertise}</span>
           <span className="text-purple-400 truncate">💭 {personality}</span>
         </div>
