@@ -50,7 +50,11 @@ def get_puzzle():
 
 @app.route("/api/sync", methods=["GET"])
 def sync():
-    return jsonify({"text": str(random.randint(0, 100000))})
+    colors = ["#ff0000", "#00ff00", "#0000ff", "#ffff00", "#ff00ff", "#00ffff"]
+    return jsonify({
+        "text": str(random.randint(0, 100000)),
+        "colour": random.choice(colors)
+    })
 
 @app.route("/<path:path>")
 def static_files(path):
