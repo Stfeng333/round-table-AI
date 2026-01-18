@@ -30,13 +30,16 @@ def get_deck():
                               agent["expertise"],
                               agent["personality"],
                               agent["role"]))
-    except KeyError:
+    except KeyError as e:
         return "", 400
 
     return "", 200
 
 @app.route("/api/puzzle", methods=["POST"])
 def get_puzzle():
+    if game_state.debating:
+        return "", 301
+
     try:
         game_state.puzzle = request.get_json()["puzzle"]
         game_state.start_debate()
@@ -52,12 +55,14 @@ def sync():
     msg = ""
     colour = ""
 
-    if game_state.debate_history:
+    try:
         card, msg = game_state.debate_history.pop(0)
-        colour = {"facilitator": "#ff0000",
+        colour = {"facilitator": "#DC143C",
                   "critic": "#00ff00",
                   "reasoner": "#0000ff",
                   "stateTracker": "#ffff00"}[card.role]
+    except IndexError:
+        pass
 
     return jsonify({
         "text": msg,
