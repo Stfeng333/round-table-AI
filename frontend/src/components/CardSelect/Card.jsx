@@ -5,7 +5,7 @@ const MODEL_LOGOS = {
   Llama: "/logos/llama.png",
   Qwen: "/logos/qwen.png",
   ChatGPT: "/logos/chatgpt.png",
-  "Kimi K2": "/logos/kimi.png",
+  Kimi: "/logos/kimi.png",
 };
 
 const Card = ({ id, model, expertise, personality, selected }) => {

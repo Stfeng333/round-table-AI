@@ -4,22 +4,13 @@ import Card from "../components/CardSelect/Card";
 import RoleSlot from "../components/CardSelect/RoleSlot";
 import Button from "../components/common/Button";
 
-const MODELS = ["Gemini", "Llama", "Qwen", "ChatGPT", "Kimi K2"];
+const MODELS = ["Gemini", "ChatGPT", "Llama", "Qwen", "Kimi"];
 
 const EXPERTISE = [
-  "Problem Solving",
   "Pattern Recognition",
   "Risk Assessment",
-  "Resource Optimization",
-  "Strategic Planning",
-  "Critical Analysis",
   "Creative Thinking",
-  "Systems Thinking",
   "Decision Making",
-  "Conflict Resolution",
-  "Information Synthesis",
-  "Logical Reasoning",
-  "Adaptability",
   "Long-Term Vision",
   "Detail Focus",
 ];
@@ -32,10 +23,6 @@ const PERSONALITIES = [
   "Creative",
   "Aggressive",
   "Cautious",
-  "Collaborative",
-  "Independent",
-  "Methodical",
-  "Impulsive",
   "Patient",
   "Decisive",
   "Flexible",
@@ -187,7 +174,7 @@ const CardSelect = () => {
     console.log("Submitting deck:", JSON.stringify({ agents }, null, 2));
 
     try {
-      const response = await fetch("/api/deck", {
+      const response = await fetch("http://localhost:5000/api/deck", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ agents }),

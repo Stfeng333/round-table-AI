@@ -9,6 +9,7 @@ shared_config:
       
 
   - models:
+    # OpenAI models for SAM orchestration
     planning: &planning_model
       # This dictionary structure tells ADK to use the LiteLlm wrapper.
       # 'model' uses the specific model identifier your endpoint expects.
@@ -36,6 +37,13 @@ shared_config:
       api_key: ${LLM_SERVICE_API_KEY} # Use env var for API key
       # Prompt Caching Strategy
       cache_strategy: "5m" # none, 5m, 1h
+
+    # Gemini model configuration (alternative provider)
+    gemini: &gemini_model
+      model: ${LLM_SERVICE_GEMINI_MODEL_NAME}
+      api_base: ${LLM_SERVICE_GEMINI_ENDPOINT}
+      api_key: ${LLM_SERVICE_GEMINI_API_KEY}
+      cache_strategy: "5m"
 
     image_gen: &image_generation_model
       # This dictionary structure tells ADK to use the LiteLlm wrapper.
