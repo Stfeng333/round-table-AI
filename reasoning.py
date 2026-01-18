@@ -16,7 +16,7 @@ class GameState:
         self.debating = True
 
         for card in self.cards:
-            print(card.role, card.model, card.personality, card.expertise)
+           print(f"{card.role}, {card.model}, {card.personality}, {card.expertise}")
 
         index = -1
         for i, card in enumerate(self.cards):
@@ -29,27 +29,37 @@ class GameState:
             card.client.add_context("The puzzle is: " + self.puzzle)
 
         # set a limit of 10 round robins
-        for i in range(10):
+        for i in range(4):
             random.shuffle(self.cards)
             for card in self.cards:
                 print("requesting " + card.model)
 
-                response = card.client.get_response("It is now your turn to speak.")
+                try:
+                    response = card.client.get_response("It is now your turn to speak.")
+                except Exception as e:
+                   print("something went wrong" + str(e))
+                else:
+                    self._share_context(response, card)
+                    facilitator.client.add_context(response)
+
                 time.sleep(0.5)
 
                 print(card.model + " responded")
 
-                self._share_context(response, card)
-                facilitator.client.add_context(response)
+            try:
+                response = facilitator.client.get_response("It is now your turn to speak.")
+            except Exception as e:
+                print("something went wrong " + str(e))
+            else:
+                self._share_context(response, facilitator)
 
-            response = facilitator.client.get_response("It is now your turn to speak.")
+                if "that is the answer" in response.lower():
+                    print("done, breaking")
+                    break
+
             time.sleep(0.5)
 
-            self._share_context(response, facilitator)
-
-            if "that is the answer" in response.lower():
-                print("done, breaking")
-                break
+        self.debating = False
 
     def _share_context(self, msg: str, card):
         for other_card in self.cards:

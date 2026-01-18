@@ -1,14 +1,11 @@
 from flask import Flask, send_from_directory, request, jsonify
 from dotenv import load_dotenv
-import pymongo
 
 from reasoning import GameState
 from card import Card
 
 
 game_state = GameState()
-
-mongo_client = pymongo.MongoClient("mongo", 27017)
 
 load_dotenv()
 

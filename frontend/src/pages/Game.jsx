@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import Button from "../components/common/Button";
 
 const PUZZLES = {
-  "math problem": `
-    what's 1 + 1?`
+  "Math Problem": `
+    What's 1 + 1?`
 };
 
 const Game = () => {
@@ -30,7 +30,7 @@ const Game = () => {
       } catch (error) {
         console.error("Sync error:", error);
       }
-    }, 300);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, []);

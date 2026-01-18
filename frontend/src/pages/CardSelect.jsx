@@ -7,19 +7,10 @@ import Button from "../components/common/Button";
 const MODELS = ["Gemini", "Llama", "Qwen", "ChatGPT", "Kimi"];
 
 const EXPERTISE = [
-  "Problem Solving",
   "Pattern Recognition",
   "Risk Assessment",
-  "Resource Optimization",
-  "Strategic Planning",
-  "Critical Analysis",
   "Creative Thinking",
-  "Systems Thinking",
   "Decision Making",
-  "Conflict Resolution",
-  "Information Synthesis",
-  "Logical Reasoning",
-  "Adaptability",
   "Long-Term Vision",
   "Detail Focus",
 ];
@@ -32,10 +23,6 @@ const PERSONALITIES = [
   "Creative",
   "Aggressive",
   "Cautious",
-  "Collaborative",
-  "Independent",
-  "Methodical",
-  "Impulsive",
   "Patient",
   "Decisive",
   "Flexible",
