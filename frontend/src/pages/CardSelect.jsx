@@ -4,7 +4,7 @@ import Card from "../components/CardSelect/Card";
 import RoleSlot from "../components/CardSelect/RoleSlot";
 import Button from "../components/common/Button";
 
-const MODELS = ["Gemini", "Llama", "Qwen", "ChatGPT", "Kimi"];
+const MODELS = ["Gemini", "ChatGPT", "Llama", "Qwen", "Kimi"];
 
 const EXPERTISE = [
   "Pattern Recognition",
@@ -174,7 +174,7 @@ const CardSelect = () => {
     console.log("Submitting deck:", JSON.stringify({ agents }, null, 2));
 
     try {
-      const response = await fetch("/api/deck", {
+      const response = await fetch("http://localhost:5000/api/deck", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ agents }),

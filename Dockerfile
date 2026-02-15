@@ -26,4 +26,4 @@ COPY . .
 
 COPY --from=frontend-build /frontend/dist ./frontend/dist
 
-CMD ["gunicorn", "--log-level", "debug", "app:app"]
+CMD ["gunicorn", "--log-level", "debug", "app_sam:app"]
