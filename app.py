@@ -1,13 +1,18 @@
-from flask import Flask, send_from_directory, request
+from flask import Flask, send_from_directory, request, jsonify
 from dotenv import load_dotenv
-import pymongo
 
+feat-service-integration
 from card import Card
 
 
 cards = []
 
-mongo_client = pymongo.MongoClient("mongo", 27017)
+from reasoning import GameState
+from card import Card
+main
+
+
+game_state = GameState()
 
 load_dotenv()
 
@@ -22,6 +27,7 @@ def index():
 
 @app.route("/api/deck", methods=["POST"])
 def get_deck():
+feat-service-integration
     try:
         agents = request.get_json()["agents"]
         for agent in agents:
@@ -29,16 +35,72 @@ def get_deck():
                               agent["expertise"],
                               agent["personality"],
                               agent["role"]))
+
+    data = request.get_json(silent=True)
+    if not data or "agents" not in data:
+        return jsonify({"error": "missing 'agents' in JSON body"}), 400
+
+    agents = data["agents"]
+    if not isinstance(agents, list):
+        return jsonify({"error": "'agents' must be a list"}), 400
+
+    for agent in agents:
+        if not isinstance(agent, dict):
+            return jsonify({"error": "each agent must be an object"}), 400
+
+        model = agent.get("model")
+        expertise = agent.get("expertise")
+        personality = agent.get("personality")
+        role = agent.get("role")
+
+        if not all([model, expertise, personality, role]):
+            return jsonify({"error": "agent missing required fields"}), 400
+
+        game_state.cards.append(Card(model, expertise, personality, role))
+
+    return "", 200
+
+@app.route("/api/puzzle", methods=["POST"])
+def get_puzzle():
+    if game_state.debating:
+        return "", 301
+
+    try:
+        game_state.puzzle = request.get_json()["puzzle"]
+        game_state.start_debate()
+main
     except KeyError:
         return "", 400
 
     return "", 200
+feat-service-integration
+
+
+# this endpoint will get polled by frontend to pull new messages in the debate
+@app.route("/api/sync", methods=["GET"])
+def sync():
+    # if msg is empty frontend will ignore it
+    msg = ""
+    colour = ""
+
+    try:
+        card, msg = game_state.debate_history.pop(0)
+        colour = {"facilitator": "#DC143C",
+                  "critic": "#00ff00",
+                  "reasoner": "#0000ff",
+                  "stateTracker": "#ffff00"}[card.role]
+    except IndexError:
+        pass
+
+    return jsonify({
+        "text": msg,
+        "colour": colour,
+    })
+main
 
 @app.route("/<path:path>")
 def static_files(path):
     return send_from_directory(app.static_folder, path)
-
-
 
 
 if __name__ == "__main__":

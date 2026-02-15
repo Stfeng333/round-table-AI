@@ -4,13 +4,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    depends_on:
-      mongo-db:
-        condition: service_healthy
     image: anrayliu/uottahack2:latest
     ports:
       - "5000:5000"
     env_file: .env
+ feat-service-integration
 
   mongo-db:
     image: mongo:noble
@@ -23,3 +21,4 @@ services:
       timeout: 5s
       retries: 5
       start_period: 5s
+main

@@ -1,0 +1,127 @@
+# Solace Agent Mesh - Debate Orchestrator Agent
+# Manages multi-model debates between OpenAI and Gemini LLMs
+
+log:
+  stdout_log_level: INFO
+  log_file_level: DEBUG
+  log_file: debate_orchestrator.log
+
+!include ../shared_config.yaml
+
+apps:
+  - name: "DebateOrchestrator__app"
+    app_base_path: .
+    app_module: solace_agent_mesh.agent.sac.app
+    broker:
+      <<: *broker_connection
+
+    app_config:
+      namespace: "${NAMESPACE}"
+      supports_streaming: true
+      agent_name: "DebateOrchestrator"
+      display_name: "Debate Orchestrator"
+      model: *general_model 
+
+      instruction: |
+        You are the Debate Orchestrator - a specialized agent that coordinates puzzle-solving debates between multiple AI participants.
+        
+        Your primary function is to run debates using the run_debate tool. When a user wants to start a debate:
+        
+        1. **Puzzle**: The problem/puzzle that participants will debate and solve
+        2. **Cards**: A JSON array of participant configurations, each with:
+           - model: One of "ChatGPT", "Gemini", "Llama", "Qwen", or "Kimi"
+           - role: One of "facilitator", "critic", "reasoner", "stateTracker"
+           - personality: A personality trait (e.g., "analytical", "creative", "cautious")
+           - expertise: Area of expertise (e.g., "logic", "mathematics", "science")
+        
+        **SUPPORTED MODELS**:
+        - "ChatGPT" or "openai" → OpenAI GPT-4o
+        - "Gemini" or "gemini" → Google Gemini 2.5 Flash
+        - "Llama" or "llama" → Llama 3.3 70B (via Groq)
+        - "Qwen" or "qwen" → Qwen3 32B (via Groq)
+        - "Kimi" or "kimi" → Llama 3.1 8B (via Groq)
+        
+        **IMPORTANT**: Exactly ONE card must have role="facilitator". The facilitator makes the final decision.
+        
+        Example cards JSON:
+        ```json
+        [
+          {"model": "Qwen", "role": "facilitator", "personality": "decisive", "expertise": "leadership"},
+          {"model": "Llama", "role": "critic", "personality": "skeptical", "expertise": "logic"},
+          {"model": "ChatGPT", "role": "reasoner", "personality": "analytical", "expertise": "mathematics"},
+          {"model": "Gemini", "role": "stateTracker", "personality": "observant", "expertise": "fact-checking"}
+        ]
+        ```
+        
+        When receiving a request, extract the puzzle and cards configuration, then call run_debate.
+        Present the debate results in a clear, formatted way showing each participant's contributions.
+        
+        **REAL-TIME UPDATES**: Use send_frontend_message to send updates to the user's screen in real-time.
+        Call this tool whenever:
+        - A debate round starts
+        - A participant speaks
+        - Important decisions are made
+        - The debate concludes
+        
+        Use these colors for different roles:
+        - Facilitator: "#DC143C" (red)
+        - Critic: "#00FF00" (green)
+        - Reasoner: "#0088FF" (blue)
+        - StateTracker: "#FFFF00" (yellow)
+        - System updates: "#FFFFFF" (white)
+      
+      tools:
+        - tool_type: python
+          component_module: "src.debate_tools"
+          function_name: "run_debate"
+          tool_config: {}
+        - tool_type: python
+          component_module: "src.debate_tools"
+          function_name: "call_llm"
+          tool_config: {}
+        - tool_type: python
+          component_module: "src.debate_tools"
+          function_name: "send_frontend_message"
+          tool_config: {}
+
+      session_service: 
+        type: "sql"
+        default_behavior: "PERSISTENT"
+        database_url: "${DEBATE_ORCHESTRATOR_DATABASE_URL, sqlite:///debate_orchestrator.db}"
+      artifact_service: *default_artifact_service
+      
+      artifact_handling_mode: "reference"
+      enable_embed_resolution: true
+      enable_artifact_content_instruction: true
+      data_tools_config: *default_data_tools_config
+
+      # Agent Card Definition
+      agent_card:
+        description: |
+          Debate Orchestrator - Coordinates multi-model AI debates for puzzle solving.
+          Supports OpenAI (ChatGPT) and Gemini models as debate participants.
+          Each participant has a role (facilitator, critic, reasoner, stateTracker), 
+          personality, and expertise that shapes their contributions.
+          Can send real-time updates to the frontend during debates.
+        defaultInputModes: [text] 
+        defaultOutputModes: [text, file] 
+        skills:
+          - id: "run_debate"
+            name: "Run Multi-Model Debate"
+            description: "Orchestrates a debate between multiple AI models to solve puzzles collaboratively"
+          - id: "call_llm"
+            name: "Call Individual LLM"
+            description: "Make a single call to an OpenAI or Gemini model with debate participant configuration"
+          - id: "send_frontend_message"
+            name: "Send Frontend Message"
+            description: "Send a real-time message to the frontend UI for live updates during debates"
+      
+      # Discovery & Communication
+      agent_card_publishing: 
+        interval_seconds: 10
+      agent_discovery: 
+        enabled: true
+      inter_agent_communication:
+        allow_list: ["*"]
+        deny_list: [] 
+        request_timeout_seconds: 600
