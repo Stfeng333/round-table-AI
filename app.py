@@ -20,15 +20,27 @@ def index():
 
 @app.route("/api/deck", methods=["POST"])
 def get_deck():
-    try:
-        agents = request.get_json()["agents"]
-        for agent in agents:
-            game_state.cards.append(Card(agent["model"],
-                              agent["expertise"],
-                              agent["personality"],
-                              agent["role"]))
-    except KeyError as e:
-        return "", 400
+    data = request.get_json(silent=True)
+    if not data or "agents" not in data:
+        return jsonify({"error": "missing 'agents' in JSON body"}), 400
+
+    agents = data["agents"]
+    if not isinstance(agents, list):
+        return jsonify({"error": "'agents' must be a list"}), 400
+
+    for agent in agents:
+        if not isinstance(agent, dict):
+            return jsonify({"error": "each agent must be an object"}), 400
+
+        model = agent.get("model")
+        expertise = agent.get("expertise")
+        personality = agent.get("personality")
+        role = agent.get("role")
+
+        if not all([model, expertise, personality, role]):
+            return jsonify({"error": "agent missing required fields"}), 400
+
+        game_state.cards.append(Card(model, expertise, personality, role))
 
     return "", 200
 

@@ -16,6 +16,24 @@ const renderMarkdown = (text) => {
 };
 
 const PUZZLES = {
+feat-second-puzzle
+  "Math Problem": `
+    What's 1 + 1?`,
+  "Murder Mystery": `
+  The Fortress Blackwood Manor was a Victorian gargoyle of stone and rot. Inside, the air was a suffocating mix of lavender and the coppery tang of recent death. Beatrice Hemlock lay in the Yellow Drawing Room—a hermetically sealed tomb. The door was bolted from the inside; the windows were latched; the chimney was barred.
+On the mahogany table sat cold Earl Grey and an open bottle of heart medication, its safety cap discarded on the rug like a spent shell casing. A single white pill rested at the table’s extreme edge—perfectly dry. Beside it lay Beatrice’s personal ledger. The morning’s entries were sharp, but the final lines were a jagged, desperate scrawl of crossed-out dosages. In her arrogance, she had tried to map her own survival and lost her way.
+The Vultures The three heirs were a triad of golden rot, gathered in the music room:
+Julian: Nursed a crystal glass, complaining the police tape was an "aesthetic violation." He ignored his severe almond allergy, mindlessly reaching for a bowl of mixed nuts.
+Elara: Calculated the market value of the Ming vases while her mother’s chalk outline still gripped the carpet.
+Sloane: Fretted over her Hamptons gala, treating the death as a "vibe-shift" she hadn't consented to.
+The Shadow in the Kitchen Mrs. Holloway, the heartbeat of the manor for twenty years, stood by the sideboard. She had been "retained" for the night because the heirs couldn't operate the industrial coffee machine. She moved with predatory grace, her eyes never leaving the back of Julian’s neck.
+As she poured Julian’s coffee, her hand trembled—not with grief, but with a restrained, violent energy. The detective noticed a small, unlabeled vial of clear liquid tucked into her apron string.
+"Master Julian always did have such... delicate requirements," she whispered, stirring his cup with a silver spoon. "He never could resist the sweetness of a specialized blend."
+The Final Inventory The detective looked from the jagged ledger in the drawing room to the special coffee in the dining hall.
+The "Locked Room" wasn't a puzzle to be solved; it was a sanctuary where Beatrice's overconfidence finally fumbled a dosage. She hadn't been murdered; she had simply locked out the only person who knew how to keep her heart beating.
+But as Holloway hovered behind Julian, her thumb lingering on the rim of his cup, the detective realized the night’s work was only half-finished. Beatrice was the victim of her own pride, but Julian was about to be the victim of a professional.
+
+  `
   "Math Problem": `What's 1 + 1?`,
 
   "Murder at Blackwood Manor": `The Fortress Blackwood Manor was a Victorian gargoyle of stone and rot. Inside, the air was a suffocating mix of lavender and the coppery tang of recent death. Beatrice Hemlock lay in the Yellow Drawing Room—a hermetically sealed tomb. The door was bolted from the inside; the windows were latched; the chimney was barred.
@@ -36,6 +54,7 @@ As she poured Julian's coffee, her hand trembled—not with grief, but with a re
 The Final Inventory: The detective looked from the jagged ledger in the drawing room to the special coffee in the dining hall.
 
 Question: What happened to Beatrice, and what is about to happen to Julian?`,
+main
 };
 
 const Game = () => {
