@@ -16,6 +16,7 @@ game_state = GameState()
 
 load_dotenv()
 
+
 app = Flask(
     __name__,
     static_folder="frontend/dist",
@@ -103,5 +104,8 @@ def static_files(path):
     return send_from_directory(app.static_folder, path)
 
 
+feat
+
+main
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
