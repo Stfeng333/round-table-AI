@@ -1,0 +1,24 @@
+---
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: anrayliu/uottahack2:latest
+    ports:
+      - "5000:5000"
+    env_file: .env
+ feat-service-integration
+
+  mongo-db:
+    image: mongo:noble
+    environment:
+      MONOGO_INITDB_ROOT_USERNAME: root
+      MONOGO_INITDB_ROOT_PASSWORD: rootroot
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+main
