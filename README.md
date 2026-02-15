@@ -71,7 +71,7 @@ sam run
 ### 5. Open Your Browser
 Navigate to: **http://localhost:5173**
 
-## 🔧 Troubleshooting
+## Troubleshooting for you
 **Issue**: "Error code: 429 - You exceeded your current quota"
 - **Solution**: This means you're using OpenAI's paid API. Make sure you selected "ChatGPT" (which uses Groq) instead of creating an "OpenAI" model.
 
