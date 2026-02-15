@@ -100,7 +100,6 @@ const RoleSlot = ({ role, selected, required, onDrop, onRemove }) => {
                 <span className="text-neutral-600 text-lg">+</span>
               </div>
             )}
-            )
           </div>
         ))}
       </div>

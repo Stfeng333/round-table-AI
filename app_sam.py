@@ -43,6 +43,9 @@ def _run_sam_debate(puzzle: str, cards: list):
     """Run debate through SAM gateway in background thread."""
     debate_state.debating = True
     
+    print("🚀 Starting debate...")
+    print(f"   Trying SAM Gateway at: {SAM_GATEWAY_URL}")
+    
     try:
         # Build the prompt for the DebateOrchestrator
         cards_json = json.dumps(cards)
@@ -68,6 +71,8 @@ Run the debate and show me the full discussion."""
             timeout=600  # 10 minute timeout for long debates
         )
         
+        print(f"   SAM Response: {response.status_code}")
+        
         if response.status_code == 200:
             result = response.json()
             
@@ -85,6 +90,7 @@ Run the debate and show me the full discussion."""
                         "colour": "#FFFFFF"
                     })
         else:
+            print(f"   SAM Error: {response.text[:200]}")
             debate_state.debate_history.put({
                 "role": "error",
                 "message": f"SAM Gateway error: {response.status_code} - {response.text}",
@@ -93,8 +99,10 @@ Run the debate and show me the full discussion."""
             
     except requests.exceptions.ConnectionError:
         # SAM not running - fall back to direct debate
+        print("   ⚠️  SAM not running, falling back to direct debate")
         _run_direct_debate(puzzle, cards)
     except Exception as e:
+        print(f"   ❌ Error: {str(e)}")
         debate_state.debate_history.put({
             "role": "error", 
             "message": f"Error: {str(e)}",
@@ -108,6 +116,10 @@ def _run_direct_debate(puzzle: str, cards: list):
     """Run debate directly using debate_tools with real-time message streaming."""
     from src.debate_tools import run_debate_streaming
     
+    print("🎯 Running DIRECT debate (SAM not available)")
+    print(f"   Cards: {len(cards)}")
+    print(f"   Puzzle: {puzzle[:100]}...")
+    
     colour_map = {
         "facilitator": "#DC143C",
         "critic": "#00ff00", 
@@ -118,6 +130,7 @@ def _run_direct_debate(puzzle: str, cards: list):
     def on_message(role: str, message: str, model: str):
         """Callback for each debate message - pushes to queue immediately."""
         colour = colour_map.get(role, "#FFFFFF")
+        print(f"   📨 [{role}] {message[:80]}...")
         debate_state.debate_history.put({
             "role": role,
             "message": message,
@@ -140,6 +153,9 @@ def _run_direct_debate(puzzle: str, cards: list):
                 "colour": "#FF0000"
             })
     except Exception as e:
+        print(f"❌ Direct debate error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         debate_state.debate_history.put({
             "role": "error",
             "message": f"Direct debate error: {str(e)}",
@@ -165,8 +181,12 @@ def get_deck():
                 "personality": agent["personality"],
                 "role": agent["role"]
             })
+        print(f"✅ Deck configured with {len(debate_state.cards)} agents:")
+        for agent in debate_state.cards:
+            print(f"   - {agent['role']}: {agent['model']} ({agent['personality']}, {agent['expertise']})")
         return "", 200
     except KeyError as e:
+        print(f"❌ Deck configuration error: Missing field {str(e)}")
         return jsonify({"error": f"Missing field: {str(e)}"}), 400
 
 
@@ -181,7 +201,11 @@ def get_puzzle():
         debate_state.puzzle = puzzle
         
         if not debate_state.cards:
+            print("ERROR: No cards configured!")
             return jsonify({"error": "No cards configured. Call /api/deck first."}), 400
+        
+        print(f"Starting debate with {len(debate_state.cards)} cards")
+        print(f"Puzzle: {puzzle[:100]}...")
         
         # Start debate in background thread - SAM with fallback to direct
         thread = Thread(

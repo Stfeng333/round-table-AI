@@ -15,12 +15,9 @@ const Welcome = () => {
       style={{ backgroundImage: "url('/background.png')" }}
     >
       <div className="text-center bg-black/50 backdrop-blur-sm p-12 rounded-2xl">
-        <h1 className="text-6xl font-bold text-white mb-4 drop-shadow-lg">
-          Use code UOTTA26 for free stuff!
+        <h1 className="text-6xl font-bold text-white mb-12 drop-shadow-lg">
+          Choose your AI knights and solve the problem
         </h1>
-        <p className="text-xl text-gray-100 mb-12 drop-shadow-md">
-          also check out our AI thing
-        </p>
         <Button onClick={handleStartGame}>Start Game</Button>
       </div>
     </div>

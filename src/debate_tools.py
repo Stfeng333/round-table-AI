@@ -8,8 +8,6 @@ import os
 import json
 import requests
 from typing import Dict, Any, List, Optional
-from pydantic import BaseModel, Field
-from google.adk.tools import ToolContext
 
 
 # Flask API URL for pushing messages to frontend
@@ -123,6 +121,7 @@ GROQ_MODELS = {
     "llama": "llama-3.3-70b-versatile",
     "qwen": "qwen/qwen3-32b",  
     "kimi": "moonshotai/kimi-k2-instruct",  # Real Kimi K2 on Groq - 256k context!
+    "chatgpt": "openai/gpt-oss-120b",  # Open-source GPT model on Groq
 }
 
 
@@ -161,7 +160,7 @@ def call_llm(
     conversation_history: str,
     prompt: str,
     model_name: Optional[str] = None,
-    tool_context: Optional[ToolContext] = None,
+    tool_context: Optional[Any] = None,
     **kwargs
 ) -> Dict[str, Any]:
     """
@@ -199,12 +198,15 @@ def call_llm(
     messages.append({"role": "user", "content": prompt})
     
     # Call appropriate provider
-    if provider == "openai" or provider == "chatgpt":
+    if provider == "openai":
         model = model_name or "gpt-4o"
         response = _call_openai(messages, model)
     elif provider == "gemini":
         model = model_name or "gemini-2.5-flash"
         response = _call_gemini(messages, model)
+    elif provider == "chatgpt":
+        model = model_name or GROQ_MODELS["chatgpt"]
+        response = _call_groq(messages, model)
     elif provider == "llama":
         model = model_name or GROQ_MODELS["llama"]
         response = _call_groq(messages, model)
@@ -235,7 +237,7 @@ def run_debate(
     puzzle: str,
     cards: str,
     max_rounds: int = 4,
-    tool_context: Optional[ToolContext] = None,
+    tool_context: Optional[Any] = None,
     **kwargs
 ) -> Dict[str, Any]:
     """
@@ -315,8 +317,10 @@ def run_debate(
         for card in participants:
             provider = card.get("model", "openai")
             # Map frontend model names to providers
-            if provider.lower() in ["chatgpt", "gpt", "openai"]:
-                provider = "openai"
+            if provider.lower() in ["chatgpt", "gpt"]:
+                provider = "chatgpt"  # Uses Groq's open-source GPT model
+            elif provider.lower() == "openai":
+                provider = "openai"  # Uses OpenAI's paid API
             elif provider.lower() in ["gemini", "google"]:
                 provider = "gemini"
             elif provider.lower() == "llama":
@@ -369,8 +373,10 @@ def run_debate(
         
         # Facilitator speaks
         fac_provider = facilitator.get("model", "openai")
-        if fac_provider.lower() in ["chatgpt", "gpt", "openai"]:
-            fac_provider = "openai"
+        if fac_provider.lower() in ["chatgpt", "gpt"]:
+            fac_provider = "chatgpt"  # Uses Groq's open-source GPT model
+        elif fac_provider.lower() == "openai":
+            fac_provider = "openai"  # Uses OpenAI's paid API
         elif fac_provider.lower() in ["gemini", "google"]:
             fac_provider = "gemini"
         elif fac_provider.lower() == "llama":
@@ -556,7 +562,7 @@ async def send_frontend_message(
     role: str,
     message: str,
     colour: str = "#FFFFFF",
-    tool_context: Optional[ToolContext] = None,
+    tool_context: Optional[Any] = None,
     tool_config: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
