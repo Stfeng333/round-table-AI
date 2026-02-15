@@ -2,7 +2,10 @@
 See frontend/src/pages/CardSelect.jsx for lists of models, expertises, personalities and roles
 '''
 
+feat-service-integration
+
 from llms import *
+main
 
 class Card:
     def __init__(self, model: str, expertise: str, personality: str, role: str):
@@ -10,6 +13,7 @@ class Card:
         self.expertise = expertise
         self.personality = personality
         self.role = role
+feat-service-integration
 
         clients = {"Gemini": Gemini3Flash,
                    "Llama": Llama33,
@@ -35,3 +39,4 @@ class Card:
             Before you are told to speak, you will be given the conversation that is currently unfolding. Don't hallucinate please.
             '''
         )
+main

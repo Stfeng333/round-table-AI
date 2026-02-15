@@ -1,8 +1,15 @@
 from flask import Flask, send_from_directory, request, jsonify
 from dotenv import load_dotenv
 
+feat-service-integration
+from card import Card
+
+
+cards = []
+
 from reasoning import GameState
 from card import Card
+main
 
 
 game_state = GameState()
@@ -20,6 +27,15 @@ def index():
 
 @app.route("/api/deck", methods=["POST"])
 def get_deck():
+feat-service-integration
+    try:
+        agents = request.get_json()["agents"]
+        for agent in agents:
+            cards.append(Card(agent["model"],
+                              agent["expertise"],
+                              agent["personality"],
+                              agent["role"]))
+
     data = request.get_json(silent=True)
     if not data or "agents" not in data:
         return jsonify({"error": "missing 'agents' in JSON body"}), 400
@@ -52,10 +68,13 @@ def get_puzzle():
     try:
         game_state.puzzle = request.get_json()["puzzle"]
         game_state.start_debate()
+main
     except KeyError:
         return "", 400
 
     return "", 200
+feat-service-integration
+
 
 # this endpoint will get polled by frontend to pull new messages in the debate
 @app.route("/api/sync", methods=["GET"])
@@ -77,6 +96,7 @@ def sync():
         "text": msg,
         "colour": colour,
     })
+main
 
 @app.route("/<path:path>")
 def static_files(path):
